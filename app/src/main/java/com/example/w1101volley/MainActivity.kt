@@ -1,22 +1,23 @@
 package com.example.w1101volley
-
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.example.w1101volley.databinding.ActivityMainBinding
+import org.json.JSONObject
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var queue: RequestQueue
+    private val movies = ArrayList<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        setContentView(R.layout.activity_main)
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -28,15 +29,30 @@ class MainActivity : AppCompatActivity() {
                 url,
                 null,
                 {
-                    //처리가 잘 됐을 때 call-back 함수
-                    Toast.makeText(application, it.toString(), Toast.LENGTH_LONG).show()
+                    movies.clear()
+                    parseJason(it)
+                    Toast.makeText(application,  movies.toString()
+                        .replace(",", "\n")
+                        .replace("[\\[\\]]".toRegex(), ""), Toast.LENGTH_LONG).show()
+                    binding.listMovies.adapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, movies)
                 },
                 {
-                    //에러가 났을 때 호출되는 함수
                     Toast.makeText(application, it.toString(), Toast.LENGTH_LONG).show()
                 }
             )
+
             queue.add(request)
         }
     }
+
+    private fun parseJason(obj: JSONObject) {
+        val items = obj.getJSONObject("data").getJSONArray("movies")
+        for (i in 0 until items.length()) {
+            val item: JSONObject = items[i] as JSONObject // as : TypeCasting
+            val title = item.getString("title_long")
+            movies.add(title)
+        }
+    }
 }
+
+
